@@ -3,9 +3,27 @@ import ReactDOM from 'react-dom';
 import './index.css';
 import App from './App';
 import reportWebVitals from './reportWebVitals';
+import { ConfirmProvider } from "material-ui-confirm"
+import { ThemeProvider, createMuiTheme } from "@material-ui/core/styles"
+
+const theme = createMuiTheme({
+  palette: {
+    type: 'dark',
+    primary: {
+      main: "#061A47",
+    },
+    background: {
+      paper: "#3D3D3D"
+    }
+  },
+})
 
 ReactDOM.render(
-  <App />,
+  <ThemeProvider theme={theme}>
+    <ConfirmProvider>
+      <App />
+    </ConfirmProvider>
+  </ThemeProvider>,
   document.getElementById('root')
 );
 
