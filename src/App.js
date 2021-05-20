@@ -29,13 +29,10 @@ import {
   Close as CloseIcon, 
   Home as HomeIcon, 
   ArrowUpward as ArrowUpwardIcon,
-  Folder as FolderIcon,
-  Description as DescriptionIcon,
   // DoubleArrow as DoubleArrowIcon,
   Launch as LaunchIcon,
   Delete as DeleteIcon,
 } from "@material-ui/icons"
-import { TreeView, TreeItem } from "@material-ui/lab"
 import HardDriveIcon from "./images/hard-drive.svg"
 import Logo from "./images/default-monochrome-white.svg"
 import FolderWithFilesIcon from "./images/folder-with-files.svg"
@@ -44,6 +41,8 @@ import TableIcon from "./images/table-icon.svg"
 import './App.css'
 import { v4 as uuid } from "uuid"
 import { useConfirm } from "material-ui-confirm"
+import FileSubtree from "./components/FileSubtree"
+import FileView from "./components/FileView"
 
 const useStyles = makeStyles(theme => {
   return {
@@ -156,6 +155,7 @@ const useStyles = makeStyles(theme => {
     },
     toolTip: {
       textAlign: "center",
+      opacity: "1 !important"
     },
     explorerItem: {
       padding: "10px",
@@ -167,6 +167,9 @@ const useStyles = makeStyles(theme => {
     errorModal: {
       width: "60%",
       padding: "20px",
+    },
+    tabHeader: {
+      textAlign: "left",
     }
   }
 })
@@ -176,10 +179,6 @@ const App = () => {
   const classes = useStyles()
   const [currentRightTab, setCurrentRightTab] = useState(0)
   const [currentLeftTab, setCurrentLeftTab] = useState(0)
-  const [currentDirectory, setCurrentDirectory] = useState(0)
-  const [disks, setDisks] = useState({})
-  const [currentDisk, setCurrentDisk] = useState(null)
-  const [currentPath, setCurrentPath] = useState("/")
   const [fileRightClick, setFileRightClick] = useState({})
   const [selected, setSelected] = useState(null)
   const scrollPosition = useRef({
@@ -266,14 +265,6 @@ const App = () => {
     return [freeBlocks, freeBlockIndices]
   }
 
-  const getDirectoryObject = (diskName, directory) => {
-    return disks[diskName].dataBlocks[disks[diskName].inodes[directory].blockPointers[0]]
-  }
-
-  const getInodeObject = (diskName, id) => {
-    return disks[diskName].inodes[id]
-  }
-
   const handleDelete = (diskName, directory) => {
     deleteConfirm({ 
       title: "Delete from folder?",
@@ -310,123 +301,6 @@ const App = () => {
     .catch((error) => {
       console.log(error)
     })
-  }
-
-  const getFileSubtree = (diskName, rootDirectory, iteration = 0) => {
-    let updatedIteration = iteration
-    const directory = getDirectoryObject(diskName, rootDirectory)
-    const inode = getInodeObject(diskName, rootDirectory)
-    const directoryId = String(updatedIteration)
-    return (
-      <TreeItem 
-        nodeId={directoryId} 
-        key={directoryId} 
-        label={inode.name}
-        onClick={() => {
-          setCurrentDirectory(rootDirectory)
-          setSelected(null)
-        }}
-      >
-        {
-          Object.keys(directory).map(item => {
-            if(item !== "." && item !== "..") {
-              const inode = getInodeObject(diskName, directory[item])
-              updatedIteration = updatedIteration + 1
-              if(inode.type === "file") {
-                const fileId = String(updatedIteration)
-                return <TreeItem 
-                  nodeId={fileId} 
-                  key={fileId} 
-                  label={inode.name}
-                  onClick={() => {
-                    setCurrentDirectory(rootDirectory)
-                    setSelected(directory[item])
-                  }}
-                />
-              } else {
-                return getFileSubtree(diskName, directory[item], updatedIteration)
-              }
-            } else {
-              return ""
-            }
-          })
-        }
-      </TreeItem>
-    )
-  }
-
-  const generateFileView = (diskName, directory) => {
-    const directoryObject = getDirectoryObject(diskName, directory)
-
-    return (
-      Object.keys(directoryObject).map(item => {
-        if(item !== "." && item !== "..") {
-          const inode = getInodeObject(diskName, directoryObject[item])
-          return (
-            <div key={`${directory}-${item}`}>
-              <div 
-                onContextMenu={(event) => handleFileRightClick(event, inode.name)} style={{ cursor: 'context-menu' }}
-                onClick={() => {
-                  setSelected(directoryObject[item])
-                }}
-                onDoubleClick={
-                  () => {
-                    if(inode.type === "directory") {
-                      setCurrentDirectory(directoryObject[item])
-                    }
-                  }
-                }
-              >
-                {
-                    <Paper variant="outlined" className={selected === directoryObject[item] ? clsx(classes.explorerItem, classes.explorerItemSelected) : classes.explorerItem}>
-                      { inode.type === "file" ? 
-                        <DescriptionIcon fontSize="large"/> :
-                        <FolderIcon fontSize="large" />
-                      }
-                      <Typography style={{whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis"}}>{inode.name}</Typography> 
-                    </Paper>
-                }
-                <Menu
-                  keepMounted
-                  open={fileRightClick[inode.name]?.mouseY != null}
-                  onClose={handleClose}
-                  anchorReference="anchorPosition"
-                  anchorPosition={
-                    (fileRightClick[inode.name]?.mouseY != null) && (fileRightClick[inode.name]?.mouseX != null)
-                      ? { top: fileRightClick[inode.name].mouseY, left: fileRightClick[inode.name].mouseX }
-                      : undefined
-                  }
-                >
-                  <MenuItem disabled><Typography variant="overline">{inode.name}</Typography></MenuItem>
-                  {
-                    inode.type !== "file" &&
-                    <MenuItem onClick={
-                      () => {
-                        setCurrentDirectory(directoryObject[item])
-                        handleClose()
-                      }
-                    }>
-                      <ListItemIcon>
-                        <LaunchIcon />
-                      </ListItemIcon>
-                      <Typography>Open</Typography>
-                    </MenuItem>
-                  }
-                  <MenuItem onClick={() => handleDelete(diskName, directoryObject[item])}>
-                    <ListItemIcon>
-                      <DeleteIcon />
-                    </ListItemIcon>
-                    <Typography>Delete</Typography>
-                  </MenuItem>
-                </Menu>
-              </div>
-            </div>
-          )
-        } else {
-          return null
-        }
-      })
-    )
   }
 
   const createFile = (name, uid, diskName, parentId, permissions, sizeInBytes) => {
@@ -485,7 +359,6 @@ const App = () => {
     const inode = getInodeObject(diskName, directory)
     const directoryObject = getDirectoryObject(diskName, directory)
     if(inode.type === "directory") {
-      console.log(Object.keys(directoryObject))
       if(Object.keys(directoryObject).length > 2) {
         const title = "Unable to Unlink"
         const description = "You cannot unlink a folder that has any files or folders inside of it. Try removing those first."
@@ -700,101 +573,104 @@ const App = () => {
                     </div>
                   } />
                 </Tabs>
-                <TabPanel>
+                <TabPanel value={currentLeftTab} index={0}>
+                  <Typography variant="h5" className={classes.tabHeader}>Add a New Disk</Typography>
+                  <hr style={{marginBottom: "20px"}} />
+                  <Tooltip
+                    title={
+                      <>
+                        <Typography className={classes.toolTip} color="inherit"><code style={{color: "#FF6461", background: "black", padding: "3px"}}>sda</code> or <code style={{color: "#FF6461", background: "black", padding: "3px"}}>sdb</code> are common UNIX examples.</Typography>
+                      </>
+                    }
+                    placement="top" 
+                    arrow
+                  >
+                    <TextField 
+                      variant="outlined" 
+                      fullWidth
+                      label="Disk Name"
+                      name="diskName"
+                      value={params.diskName}
+                      onChange={handleChange}
+                    />
+                  </Tooltip>
+                  <TextField 
+                    variant="outlined"
+                    label="Disk Size"
+                    name="diskSize"
+                    value={params.diskSize}
+                    onChange={handleChange}
+                    fullWidth 
+                    InputProps={{
+                      endAdornment: <InputAdornment position="end">KiB</InputAdornment>
+                    }}
+                  />
+                  { !params.simpleMode && 
+                    (
+                      <>
+                        <TextField 
+                          variant="outlined" 
+                          label="Block Size"
+                          name="blockSize"
+                          onChange={handleChange}
+                          fullWidth
+                          InputProps={{
+                            endAdornment: <InputAdornment position="end">KiB</InputAdornment>
+                          }}
+                          value={params.blockSize}
+                        />
+                        <TextField 
+                          variant="outlined"
+                          label="Inode Size"
+                          name="inodeSize"
+                          onChange={handleChange}
+                          fullWidth
+                          InputProps={{
+                            endAdornment: <InputAdornment position="end">B</InputAdornment>
+                          }}
+                          value={params.inodeSize}
+                        />
+                      </>
+                    )
+                  }
+                  <Tooltip
+                    title={
+                      <>
+                        <Typography color="inherit">When simple mode is on, the system chooses inode and block sizes.</Typography>
+                      </>
+                    }
+                    placement="right" 
+                    arrow
+                  >
+                    <FormControlLabel
+                      control={
+                        <Switch
+                          name="simpleMode"
+                          checked={params.simpleMode}
+                          onChange={handleChange}
+                          color="primary"
+                        />
+                      }
+                      label="Simple Mode"
+                    />
+                  </Tooltip>
+                  
+                  <Button variant="contained" color="primary" endIcon={<AddIcon />} className={classes.right} onClick={createDisk}>Create</Button>
+                  <Button variant="contained" color="primary" endIcon={<AddIcon />} className={classes.right} onClick={
+                    () => {
+                      createFile(`abc.txt-${uuid()}`, "User", currentDisk, currentDirectory, "rwxd", 1000)
+                    }
+                  }>Add File</Button>
+                  <Button variant="contained" color="primary" endIcon={<AddIcon />} className={classes.right} onClick={
+                    () => {
+                      createDirectory(`SubDir-${uuid()}`, "User", currentDisk, currentDirectory, "rwxd")
+                    }
+                  }>Add Directory</Button>
+                  <div style={{clear: "both"}}></div>
+                </TabPanel>
+                <TabPanel value={currentLeftTab} index={1}>
 
                 </TabPanel>
-                <hr style={{marginBottom: "20px"}} />
-                <Tooltip
-                  title={
-                    <>
-                      <Typography className={classes.toolTip} color="inherit"><code style={{color: "#FF6461", background: "black", padding: "3px"}}>sda</code> or <code style={{color: "#FF6461", background: "black", padding: "3px"}}>sdb</code> are common UNIX examples.</Typography>
-                    </>
-                  }
-                  placement="top" 
-                  arrow
-                >
-                <TextField 
-                  variant="outlined" 
-                  fullWidth
-                  label="Disk Name"
-                  name="diskName"
-                  value={params.diskName}
-                  onChange={handleChange}
-                />
-                </Tooltip>
-                <TextField 
-                  variant="outlined"
-                  label="Disk Size"
-                  name="diskSize"
-                  value={params.diskSize}
-                  onChange={handleChange}
-                  fullWidth 
-                  InputProps={{
-                    endAdornment: <InputAdornment position="end">KiB</InputAdornment>
-                  }}
-                />
-                { !params.simpleMode && 
-                  (
-                    <>
-                      <TextField 
-                        variant="outlined" 
-                        label="Block Size"
-                        name="blockSize"
-                        onChange={handleChange}
-                        fullWidth
-                        InputProps={{
-                          endAdornment: <InputAdornment position="end">KiB</InputAdornment>
-                        }}
-                        value={params.blockSize}
-                      />
-                      <TextField 
-                        variant="outlined"
-                        label="Inode Size"
-                        name="inodeSize"
-                        onChange={handleChange}
-                        fullWidth
-                        InputProps={{
-                          endAdornment: <InputAdornment position="end">B</InputAdornment>
-                        }}
-                        value={params.inodeSize}
-                      />
-                    </>
-                  )
-                }
-                <Tooltip
-                  title={
-                    <>
-                      <Typography color="inherit">When simple mode is on, the system chooses inode and block sizes.</Typography>
-                    </>
-                  }
-                  placement="right" 
-                  arrow
-                >
-                  <FormControlLabel
-                    control={
-                      <Switch
-                        name="simpleMode"
-                        checked={params.simpleMode}
-                        onChange={handleChange}
-                        color="primary"
-                      />
-                    }
-                    label="Simple Mode"
-                  />
-                </Tooltip>
-                
-                <Button variant="contained" color="primary" endIcon={<AddIcon />} className={classes.right} onClick={createDisk}>Create</Button>
-                <Button variant="contained" color="primary" endIcon={<AddIcon />} className={classes.right} onClick={
-                  () => {
-                    createFile(`abc.txt-${uuid()}`, "User", currentDisk, currentDirectory, "rwxd", 1000)
-                  }
-                }>Add File</Button>
-                <Button variant="contained" color="primary" endIcon={<AddIcon />} className={classes.right} onClick={
-                  () => {
-                    createDirectory(`SubDir-${uuid()}`, "User", currentDisk, currentDirectory, "rwxd")
-                  }
-                }>Add Directory</Button>
-                <div style={{clear: "both"}}></div>
               </CardContent>
             </Card>
           </Slide>
@@ -872,40 +748,8 @@ const App = () => {
                         </div>
                         <div style={{clear: "both"}} />
                         <div className={classes.explorerGroup}>
-                          <Paper variant="outlined" className={classes.explorerSidebar} ref={sideBarRef} onClick={
-                            (event) => {
-                              if(event.target === event.currentTarget) {
-                                // If you clicked on the parent, not the children
-                                setSelected(null)
-                              }
-                            }
-                          }
-                          onScroll={
-                            (event) => {
-                              const { target } = event
-                              scrollPosition.current.top = target.scrollTop
-                              scrollPosition.current.left = target.scrollLeft
-                            }
-                          }
-                          >
-                            <TreeView 
-                              defaultParentIcon={<FolderIcon />}
-                              defaultEndIcon={<DescriptionIcon />}
-                              defaultExpanded={[...Array(params.inodes).keys()].map(value => String(value))}
-                            >
-                              { getFileSubtree(currentDisk, 0) }
-                            </TreeView>
-                          </Paper>
-                          <Paper variant="outlined" className={classes.explorerMainContent} ref={explorerWindowRef} onClick={
-                            (event) => {
-                              if(event.target === event.currentTarget) {
-                                // If you clicked on the parent, not the children
-                                setSelected(null)
-                              }
-                            }
-                          }>
-                            { generateFileView(currentDisk, currentDirectory) }
-                          </Paper>
+                          <FileSubtree />
+                          <FileView />
                         </div>
                       </Paper>
                     </>
