@@ -38,6 +38,9 @@ import {
 import { TreeView, TreeItem } from "@material-ui/lab"
 import HardDriveIcon from "./images/hard-drive.svg"
 import Logo from "./images/default-monochrome-white.svg"
+import FolderWithFilesIcon from "./images/folder-with-files.svg"
+import FileExplorerIcon from "./images/file-explorer-icon.svg"
+import TableIcon from "./images/table-icon.svg"
 import './App.css'
 import { v4 as uuid } from "uuid"
 import { useConfirm } from "material-ui-confirm"
@@ -94,9 +97,11 @@ const useStyles = makeStyles(theme => {
     icon: {
       width: "50px",
       height: "50px",
+      margin: "10px auto",
+    },
+    iconWithBackground: {
       borderRadius: "100%",
       background: "white",
-      margin: "10px auto",
     },
     fileExplorer: {
       padding: "20px",
@@ -169,7 +174,8 @@ const useStyles = makeStyles(theme => {
 
 const App = () => {
   const classes = useStyles()
-  const [currentTab, setCurrentTab] = useState(0)
+  const [currentRightTab, setCurrentRightTab] = useState(0)
+  const [currentLeftTab, setCurrentLeftTab] = useState(0)
   const [currentDirectory, setCurrentDirectory] = useState(0)
   const [disks, setDisks] = useState({})
   const [currentDisk, setCurrentDisk] = useState(null)
@@ -623,8 +629,12 @@ const App = () => {
     )
   }
 
-  const handleTabChange = (event, newValue) => {
-    setCurrentTab(newValue)
+  const handleRightTabChange = (event, newValue) => {
+    setCurrentRightTab(newValue)
+  }
+
+  const handleLeftTabChange = (event, newValue) => {
+    setCurrentLeftTab(newValue)
   }
 
   const handleSelectChange = (event) => {
@@ -674,7 +684,25 @@ const App = () => {
           <Slide direction="right" in={true} mountOnEnter unmountOnExit timeout={1000}>
             <Card raised={true} className={classes.fieldContainer}>
               <CardContent>
-                <Typography variant="h5">Set Up Your File System</Typography>
+                <Tabs
+                  value={currentLeftTab}
+                  onChange={handleLeftTabChange}
+                  indicatorColor="primary"
+                >
+                  <Tab value={0} label={
+                    <div className={clsx(classes.icon, classes.iconWithBackground)}>
+                      <img src={HardDriveIcon} alt="Hard Drive Icon" />
+                    </div>
+                  } />
+                  <Tab value={1} label={
+                    <div className={classes.icon}>
+                      <img src={FolderWithFilesIcon} alt="Folder With Files Icon" />
+                    </div>
+                  } />
+                </Tabs>
+                <TabPanel>
+
+                </TabPanel>
                 <hr style={{marginBottom: "20px"}} />
                 <Tooltip
                   title={
@@ -776,18 +804,26 @@ const App = () => {
             <Card raised={true} className={classes.fieldContainer}>
               <CardContent>
                 <Tabs
-                  value={currentTab}
-                  onChange={handleTabChange}
+                  value={currentRightTab}
+                  onChange={handleRightTabChange}
                   indicatorColor="primary"
                 >
-                  <Tab value={0} label="File Explorer" />
-                  <Tab value={1} label="Inode Table" />
+                  <Tab value={0} label={
+                    <div class={classes.icon}>
+                      <img src={FileExplorerIcon} alt="File Explorer Icon" />
+                    </div>
+                  } />
+                  <Tab value={1} label={
+                    <div class={classes.icon}>
+                      <img src={TableIcon} alt="Table Icon" />
+                    </div>
+                  } />
                 </Tabs>
-                <TabPanel value={currentTab} index={0}>
+                <TabPanel value={currentRightTab} index={0}>
                   { !Object.keys(disks).length ?
                     <>
-                      <div className={classes.icon}>
-                        <img src={HardDriveIcon} width={50} alt="Hard Drive Icon" />
+                      <div className={clsx(classes.icon, classes.iconWithBackground)}>
+                        <img src={HardDriveIcon}  alt="Hard Drive Icon" />
                       </div>
                       <Typography variant="h6">Nothing to see here. Try creating a new disk.</Typography>
                     </> :
@@ -875,9 +911,9 @@ const App = () => {
                     </>
                   }
                 </TabPanel>
-                <TabPanel value={currentTab} index={1}>
-                  <div className={classes.icon}>
-                    <img src={HardDriveIcon} width={50} alt="Hard Drive Icon" />
+                <TabPanel value={currentRightTab} index={1}>
+                  <div className={clsx(classes.icon, classes.iconWithBackground)}>
+                    <img src={HardDriveIcon} alt="Hard Drive Icon" />
                   </div>
                   <Typography variant="h6">Nothing to see here. Try creating a new disk.</Typography>
                   {/* <Typography variant="h6">The Inode Table (aka File System Partition)</Typography>
