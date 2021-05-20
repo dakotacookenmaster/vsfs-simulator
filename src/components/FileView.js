@@ -1,17 +1,56 @@
-import React, { useContext } from "react"
-import { Paper } from "@material-ui/core"
+import React, { useContext, useRef, useState } from "react"
+import { 
+    Paper,
+    ListItemIcon,
+    MenuItem,
+    Typography,
+    Menu
+} from "@material-ui/core"
+import clsx from "clsx"
+import {
+    Description as DescriptionIcon,
+    Launch as LaunchIcon,
+    Delete as DeleteIcon,
+    Folder as FolderIcon,
+} from "@material-ui/icons"
 import { SystemContext } from "../contexts/SystemContext"
 
+const FileView = () => {
+    const explorerWindowRef = useRef()
+    const [selected, setSelected] = useState(null)
+    const [rightClick, setRightClick] = useState({})
 
-const FileView = (props) => {
     const {
-        currentDisk,
-        currentPath,
         currentDirectory,
-        disks
+        currentDisk,
+        getDirectoryObject,
+        getInodeObject,
+        setCurrentDirectory,
+        handleDelete,
+        classes
     } = useContext(SystemContext)
 
-    const directoryObject = getDirectoryObject(diskName, directory)
+    const handleClose = () => {
+        setRightClick({
+            mouseX: null,
+            mouseY: null,
+        });
+    };
+
+    const handleRightClick = (event, name) => {
+        event.preventDefault();
+        setRightClick(prevRightClick => {
+            return {
+                ...prevRightClick,
+                [name]: {
+                mouseX: event.clientX - 2,
+                mouseY: event.clientY - 4,
+                }
+            }
+        });
+    };
+
+    const directoryObject = getDirectoryObject(currentDisk, currentDirectory)
 
     return (
         <Paper variant="outlined" className={classes.explorerMainContent} ref={explorerWindowRef} onClick={
@@ -25,11 +64,11 @@ const FileView = (props) => {
             { 
                 Object.keys(directoryObject).map(item => {
                     if(item !== "." && item !== "..") {
-                        const inode = getInodeObject(disks, diskName, directoryObject[item])
+                        const inode = getInodeObject(currentDisk, directoryObject[item])
                         return (
                             <div key={`${currentDirectory}-${item}`}>
                                 <div 
-                                    onContextMenu={(event) => handleFileRightClick(event, inode.name)} style={{ cursor: 'context-menu' }}
+                                    onContextMenu={(event) => handleRightClick(event, inode.name)} style={{ cursor: 'context-menu' }}
                                     onClick={() => {
                                         setSelected(directoryObject[item])
                                     }}
@@ -55,12 +94,12 @@ const FileView = (props) => {
                                     }
                                     <Menu
                                         keepMounted
-                                        open={fileRightClick[inode.name]?.mouseY != null}
+                                        open={rightClick[inode.name]?.mouseY != null}
                                         onClose={handleClose}
                                         anchorReference="anchorPosition"
                                         anchorPosition={
-                                            (fileRightClick[inode.name]?.mouseY != null) && (fileRightClick[inode.name]?.mouseX != null)
-                                            ? { top: fileRightClick[inode.name].mouseY, left: fileRightClick[inode.name].mouseX }
+                                            (rightClick[inode.name]?.mouseY != null) && (rightClick[inode.name]?.mouseX != null)
+                                            ? { top: rightClick[inode.name].mouseY, left: rightClick[inode.name].mouseX }
                                             : undefined
                                         }
                                     >
@@ -77,7 +116,7 @@ const FileView = (props) => {
                                                 <Typography>Open</Typography>
                                             </MenuItem>
                                         }
-                                        <MenuItem onClick={() => handleDelete(diskName, directoryObject[item])}>
+                                        <MenuItem onClick={() => handleDelete(currentDisk, directoryObject[item])}>
                                             <ListItemIcon>
                                                 <DeleteIcon />
                                             </ListItemIcon>

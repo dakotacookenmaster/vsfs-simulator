@@ -1,15 +1,18 @@
-import React from "react"
-import { TreeView, TreeItem } from "@material-ui/lab"
+import React, { useEffect, useContext, useRef } from "react"
 import { 
-    getDirectoryObject,
-    getInodeObject
-} from "../helpers"
+    TreeView, 
+    TreeItem } from "@material-ui/lab"
 import {
     Folder as FolderIcon,
     Description as DescriptionIcon,
 } from "@material-ui/icons"
+import {
+    Paper
+} from "@material-ui/core"
+import { SystemContext } from "../contexts/SystemContext"
 
-const getFileSubtree = (diskName, rootDirectory, iteration = 0) => {
+const getFileSubtree = (diskName, rootDirectory, getDirectoryObject, getInodeObject, setCurrentDirectory, setSelected, iteration = 0) => {
+
     let updatedIteration = iteration
     const directory = getDirectoryObject(diskName, rootDirectory)
     const inode = getInodeObject(diskName, rootDirectory)
@@ -55,13 +58,26 @@ const getFileSubtree = (diskName, rootDirectory, iteration = 0) => {
 }
 
 const FileSubtree = (props) => {
-    const { 
-        currentDisk, 
-        scrollPosition, 
-        sideBarRef, 
+    const sideBarRef = useRef()
+    const { defaultExpanded } = props
+    const {
+        classes,
         setSelected,
-        params
-    } = props
+        getDirectoryObject,
+        getInodeObject,
+        setCurrentDirectory,
+        currentDisk,
+    } = useContext(SystemContext)
+    const scrollPosition = useRef({
+        top: 0, left: 0
+    })
+
+    useEffect(() => {
+        if(sideBarRef.current && scrollPosition.current) {
+          sideBarRef.current.scrollLeft = scrollPosition.current.left
+          sideBarRef.current.scrollTop =  scrollPosition.current.top
+        }
+    })
 
     return (
         <Paper variant="outlined" className={classes.explorerSidebar} ref={sideBarRef} 
@@ -84,9 +100,9 @@ const FileSubtree = (props) => {
             <TreeView 
                 defaultParentIcon={<FolderIcon />}
                 defaultEndIcon={<DescriptionIcon />}
-                defaultExpanded={[...Array(params.inodes).keys()].map(value => String(value))}
+                defaultExpanded={defaultExpanded}
             >
-                { getFileSubtree(currentDisk, 0) }
+                { getFileSubtree(currentDisk, 0, getDirectoryObject, getInodeObject, setCurrentDirectory, setSelected) }
             </TreeView>
         </Paper>
     )

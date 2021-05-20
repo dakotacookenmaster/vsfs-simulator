@@ -5,6 +5,7 @@ import App from './App';
 import reportWebVitals from './reportWebVitals';
 import { ConfirmProvider } from "material-ui-confirm"
 import { ThemeProvider, createMuiTheme } from "@material-ui/core/styles"
+import { SystemContextProvider } from './contexts/SystemContext';
 
 const theme = createMuiTheme({
   palette: {
@@ -21,7 +22,9 @@ const theme = createMuiTheme({
 ReactDOM.render(
   <ThemeProvider theme={theme}>
     <ConfirmProvider>
-      <App />
+      <SystemContextProvider>
+        <App />
+      </SystemContextProvider>
     </ConfirmProvider>
   </ThemeProvider>,
   document.getElementById('root')
