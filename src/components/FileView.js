@@ -1,10 +1,12 @@
-import React, { useContext, useRef, useState } from "react"
+import React, { useRef, useState } from "react"
+import { useConfirm } from "material-ui-confirm"
 import { 
     Paper,
     ListItemIcon,
     MenuItem,
     Typography,
-    Menu
+    Menu,
+    makeStyles
 } from "@material-ui/core"
 import clsx from "clsx"
 import {
@@ -13,22 +15,54 @@ import {
     Delete as DeleteIcon,
     Folder as FolderIcon,
 } from "@material-ui/icons"
-import { SystemContext } from "../contexts/SystemContext"
 
-const FileView = () => {
-    const explorerWindowRef = useRef()
-    const [selected, setSelected] = useState(null)
-    const [rightClick, setRightClick] = useState({})
+const useStyles = makeStyles(theme => {
+    return {
+        explorerMainContent: {
+            width: "100%",
+            padding: "10px",
+            display: "flex",
+            flexWrap: "wrap",
+            alignContent: "flex-start",
+            "& > *": {
+            width: "100px",
+            marginRight: "10px",
+            padding: "10px",
+            height: "60px",
+            marginBottom: "10px",
+            },
+            maxHeight: "400px",
+            overflow: "auto"
+        },
+        explorerItem: {
+            padding: "10px",
+            userSelect: "none",
+        },
+        explorerItemSelected: {
+            outline: "2px solid white",
+        },
+    }
+})
+
+const FileView = (props) => {
+    const {
+        currentDisk,
+        currentDirectory,
+        selected
+    } = props.data
 
     const {
-        currentDirectory,
-        currentDisk,
         getDirectoryObject,
         getInodeObject,
         setCurrentDirectory,
-        handleDelete,
-        classes
-    } = useContext(SystemContext)
+        unlink,
+        setSelected
+    } = props.methods
+
+    const classes = useStyles()
+    const explorerWindowRef = useRef()
+    const [rightClick, setRightClick] = useState({})
+    const deleteConfirm = useConfirm()
 
     const handleClose = () => {
         setRightClick({
@@ -37,14 +71,32 @@ const FileView = () => {
         });
     };
 
+    const handleDelete = (diskName, directory) => {
+        deleteConfirm({ 
+            title: "Delete from folder?",
+            description: "The file will disappear from this folder and cannot be undone.",
+            confirmationText: "Delete",
+            confirmationButtonProps: {
+                color: "primary",
+                variant: "contained",
+            }
+        })
+        .then(() => {
+            unlink(diskName, directory)
+        })
+        .catch(error => {
+            console.log(error)
+        })
+    }
+
     const handleRightClick = (event, name) => {
         event.preventDefault();
         setRightClick(prevRightClick => {
             return {
                 ...prevRightClick,
                 [name]: {
-                mouseX: event.clientX - 2,
-                mouseY: event.clientY - 4,
+                    mouseX: event.clientX - 2,
+                    mouseY: event.clientY - 4,
                 }
             }
         });
@@ -116,7 +168,12 @@ const FileView = () => {
                                                 <Typography>Open</Typography>
                                             </MenuItem>
                                         }
-                                        <MenuItem onClick={() => handleDelete(currentDisk, directoryObject[item])}>
+                                        <MenuItem onClick={
+                                            () => {
+                                                handleDelete(currentDisk, directoryObject[item])
+                                                handleClose()
+                                            }
+                                        }>
                                             <ListItemIcon>
                                                 <DeleteIcon />
                                             </ListItemIcon>

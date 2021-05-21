@@ -1,52 +1,90 @@
-import React, { useEffect, useContext, useRef } from "react"
+import React, { useEffect, useRef } from "react"
 import { 
     TreeView, 
     TreeItem } from "@material-ui/lab"
 import {
     Folder as FolderIcon,
     Description as DescriptionIcon,
+    SubdirectoryArrowRight as SubdirectoryArrowRightIcon,
 } from "@material-ui/icons"
 import {
+    makeStyles,
     Paper
 } from "@material-ui/core"
-import { SystemContext } from "../contexts/SystemContext"
 
-const getFileSubtree = (diskName, rootDirectory, getDirectoryObject, getInodeObject, setCurrentDirectory, setSelected, iteration = 0) => {
+const useStyles = makeStyles(theme => {
+    return {
+        explorerSidebar: {
+            width: "50%",
+            marginRight: "10px",
+            padding: "10px",
+            textAlign: "left",
+            overflow: "auto",
+            maxHeight: "400px",
+        },
+    }
+})
 
-    let updatedIteration = iteration
+const FileSubtreeChildren = (props) => {
+    const {
+        diskName,
+        disks,
+        rootDirectory,
+    } = props.data
+
+    const {
+        setSelected,
+        setCurrentDirectory,
+        getDirectoryObject,
+        getInodeObject,
+    } = props.methods
+
     const directory = getDirectoryObject(diskName, rootDirectory)
     const inode = getInodeObject(diskName, rootDirectory)
-    const directoryId = String(updatedIteration)
+    const directoryId = `${diskName}-directory-${inode.name}-${rootDirectory}`
+
     return (
-        <TreeItem 
+        <TreeItem
             nodeId={directoryId} 
             key={directoryId} 
             label={inode.name}
-            onClick={() => {
+            onDoubleClick={(event) => {
+                event.stopPropagation()
+                setSelected(rootDirectory)
                 setCurrentDirectory(rootDirectory)
-                setSelected(null)
             }}
         >
             {
                 Object.keys(directory).map(item => {
                     if(item !== "." && item !== "..") {
                         const inode = getInodeObject(diskName, directory[item])
-                        updatedIteration = updatedIteration + 1
                         if(inode.type === "file") {
-                            const fileId = String(updatedIteration)
+                            const fileId = `${diskName}-file-${item}-${directory[item]}`
                             return (
                                 <TreeItem 
                                     nodeId={fileId} 
                                     key={fileId} 
                                     label={inode.name}
                                     onClick={() => {
-                                        setCurrentDirectory(rootDirectory)
                                         setSelected(directory[item])
                                     }}
                                 />
                             )
                         } else {
-                            return getFileSubtree(diskName, directory[item], updatedIteration)
+                            return <FileSubtreeChildren
+                                key={`subtree-${inode.name}-${directory[item]}`}
+                                data={{
+                                    disks,
+                                    diskName,
+                                    rootDirectory: directory[item],
+                                }} 
+                                methods={{
+                                    setSelected,
+                                    setCurrentDirectory,
+                                    getDirectoryObject,
+                                    getInodeObject,
+                                }}
+                            />
                         }
                     } else {
                         return ""
@@ -57,17 +95,22 @@ const getFileSubtree = (diskName, rootDirectory, getDirectoryObject, getInodeObj
     )
 }
 
+
 const FileSubtree = (props) => {
-    const sideBarRef = useRef()
-    const { defaultExpanded } = props
     const {
-        classes,
+        disks,
+        currentDisk,
+    } = props.data
+
+    const { 
         setSelected,
+        setCurrentDirectory,
         getDirectoryObject,
         getInodeObject,
-        setCurrentDirectory,
-        currentDisk,
-    } = useContext(SystemContext)
+    } = props.methods 
+
+    const classes = useStyles()
+    const sideBarRef = useRef()
     const scrollPosition = useRef({
         top: 0, left: 0
     })
@@ -100,9 +143,21 @@ const FileSubtree = (props) => {
             <TreeView 
                 defaultParentIcon={<FolderIcon />}
                 defaultEndIcon={<DescriptionIcon />}
-                defaultExpanded={defaultExpanded}
+                defaultCollapseIcon={<SubdirectoryArrowRightIcon />}
             >
-                { getFileSubtree(currentDisk, 0, getDirectoryObject, getInodeObject, setCurrentDirectory, setSelected) }
+                <FileSubtreeChildren 
+                    data={{
+                        diskName: currentDisk,
+                        rootDirectory: 0,
+                        disks,
+                    }}
+                    methods={{
+                        setSelected,
+                        setCurrentDirectory,
+                        getDirectoryObject,
+                        getInodeObject,
+                    }}
+                />
             </TreeView>
         </Paper>
     )
