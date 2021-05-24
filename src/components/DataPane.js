@@ -14,6 +14,7 @@ import FileExplorer from "../components/FileExplorer"
 import TableIcon from "../images/table-icon.svg"
 import FileExplorerIcon from "../images/file-explorer-icon.svg"
 import HardDriveIcon from "../images/hard-drive.svg"
+import InodeTable from "./InodeTable"
 
 const useStyles = makeStyles(theme => {
     return {
@@ -100,10 +101,17 @@ const DataPane = (props) => {
                     }
                 </TabPanel>
                 <TabPanel value={currentTab} index={1}>
-                    <div className={clsx(classes.icon, classes.iconWithBackground)}>
-                        <img src={HardDriveIcon} alt="Hard Drive Icon" />
-                    </div>
-                    <Typography variant="h6">Nothing to see here. Try creating a new disk.</Typography>
+                    {!Object.keys(disks).length ? 
+                        <>
+                            <div className={clsx(classes.icon, classes.iconWithBackground)}>
+                                <img src={HardDriveIcon} alt="Hard Drive Icon" />
+                            </div>
+                            <Typography variant="h6">Nothing to see here. Try creating a new disk.</Typography>
+                        </> :
+                        <InodeTable data={{
+                            disk: disks[currentDisk]
+                        }}/>
+                    }
                 </TabPanel>
                 </CardContent>
             </Card>

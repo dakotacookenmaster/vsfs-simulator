@@ -12,6 +12,7 @@ import {
     Paper,
     FormControl,
     makeStyles,
+    Typography
 } from "@material-ui/core"
 import FileSubtree from "../components/FileSubtree"
 import FileView from "../components/FileView"
@@ -43,7 +44,11 @@ const useStyles = makeStyles(theme => {
             display: "flex",
             marginTop: "10px",
             minHeight: "300px",
+            maxHeight: "300px",
             height: "100%",
+        },
+        tabHeader: {
+            textAlign: "left",
         },
     }
 })
@@ -73,6 +78,7 @@ const FileExplorer = (props) => {
     }
 
     const unlink = (diskName, directory) => {
+        alert("UNLINKED")
         const inode = getInodeObject(diskName, directory)
         const directoryObject = getDirectoryObject(diskName, directory)
         if(inode.type === "directory") {
@@ -98,69 +104,73 @@ const FileExplorer = (props) => {
     }
 
     return (
-        <Paper variant="outlined" className={classes.fileExplorer}>
-            <div className={classes.ribbon}>
-                <FormControl variant="outlined">
-                    <InputLabel>Current Disk</InputLabel>
-                    <Select 
-                        defaultValue={Object.keys(disks)[0]}
-                        value={currentDisk}
-                        label="Current Disk"
-                        onChange={handleSelectChange}
-                    >
-                        {
-                            Object.keys(disks).map(diskName => {
-                                return (<MenuItem key={diskName} value={diskName}>{diskName}</MenuItem>)
-                            })
-                        }
-                    </Select>
-                </FormControl>
-                <Button variant="outlined" onClick={() => {
-                    setCurrentDirectory(0)
-                }}>
-                    <HomeIcon />
-                </Button>
-                <Button variant="outlined" onClick={() => {
-                    setCurrentDirectory(prevCurrentDirectory => {
-                        const currentDirectoryObject = getDirectoryObject(currentDisk, currentDirectory)
-                        return currentDirectoryObject[".."]
-                    })
-                }}>
-                    <ArrowUpwardIcon />
-                </Button>
-                <TextField variant="outlined" value={currentPath} disabled />
-            </div>
-            <div style={{clear: "both"}}></div>
-            <div className={classes.explorerGroup}>
-                <FileSubtree 
-                    data={{
-                        selected,
-                        disks,
-                        currentDisk
-                    }}
-                    methods={{
-                        getDirectoryObject,
-                        getInodeObject,
-                        setSelected,
-                        setCurrentDirectory,
-                    }}
-                />
-                <FileView
-                    data={{
-                        selected,
-                        currentDisk,
-                        currentDirectory,
-                    }}
-                    methods={{
-                        setSelected,
-                        getDirectoryObject,
-                        getInodeObject,
-                        setCurrentDirectory,
-                        unlink,
-                    }}
-                />
-            </div>
-        </Paper>
+        <>
+            <Typography variant="h5" className={classes.tabHeader}>File Explorer</Typography>
+            <hr style={{marginBottom: "20px"}} />
+            <Paper variant="outlined" className={classes.fileExplorer}>
+                <div className={classes.ribbon}>
+                    <FormControl variant="outlined">
+                        <InputLabel>Current Disk</InputLabel>
+                        <Select 
+                            defaultValue={Object.keys(disks)[0]}
+                            value={currentDisk}
+                            label="Current Disk"
+                            onChange={handleSelectChange}
+                        >
+                            {
+                                Object.keys(disks).map(diskName => {
+                                    return (<MenuItem key={diskName} value={diskName}>{diskName}</MenuItem>)
+                                })
+                            }
+                        </Select>
+                    </FormControl>
+                    <Button variant="outlined" onClick={() => {
+                        setCurrentDirectory(0)
+                    }}>
+                        <HomeIcon />
+                    </Button>
+                    <Button variant="outlined" onClick={() => {
+                        setCurrentDirectory(prevCurrentDirectory => {
+                            const currentDirectoryObject = getDirectoryObject(currentDisk, currentDirectory)
+                            return currentDirectoryObject[".."]
+                        })
+                    }}>
+                        <ArrowUpwardIcon />
+                    </Button>
+                    <TextField variant="outlined" value={currentPath} disabled />
+                </div>
+                <div style={{clear: "both"}}></div>
+                <div className={classes.explorerGroup}>
+                    <FileSubtree 
+                        data={{
+                            selected,
+                            disks,
+                            currentDisk
+                        }}
+                        methods={{
+                            getDirectoryObject,
+                            getInodeObject,
+                            setSelected,
+                            setCurrentDirectory,
+                        }}
+                    />
+                    <FileView
+                        data={{
+                            selected,
+                            currentDisk,
+                            currentDirectory,
+                        }}
+                        methods={{
+                            setSelected,
+                            getDirectoryObject,
+                            getInodeObject,
+                            setCurrentDirectory,
+                            unlink,
+                        }}
+                    />
+                </div>
+            </Paper>
+        </>
     )
 }
 

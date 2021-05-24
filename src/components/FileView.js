@@ -31,7 +31,7 @@ const useStyles = makeStyles(theme => {
             height: "60px",
             marginBottom: "10px",
             },
-            maxHeight: "400px",
+            maxHeight: "300px",
             overflow: "auto"
         },
         explorerItem: {
@@ -64,7 +64,9 @@ const FileView = (props) => {
     const [rightClick, setRightClick] = useState({})
     const deleteConfirm = useConfirm()
 
-    const handleClose = () => {
+    const handleClose = (event) => {
+        event.stopPropagation()
+        setSelected(null)
         setRightClick({
             mouseX: null,
             mouseY: null,
@@ -120,7 +122,10 @@ const FileView = (props) => {
                         return (
                             <div key={`${currentDirectory}-${item}`}>
                                 <div 
-                                    onContextMenu={(event) => handleRightClick(event, inode.name)} style={{ cursor: 'context-menu' }}
+                                    onContextMenu={(event) => {
+                                        setSelected(directoryObject[item])
+                                        handleRightClick(event, inode.name)
+                                    }} style={{ cursor: 'context-menu' }}
                                     onClick={() => {
                                         setSelected(directoryObject[item])
                                     }}
@@ -147,7 +152,11 @@ const FileView = (props) => {
                                     <Menu
                                         keepMounted
                                         open={rightClick[inode.name]?.mouseY != null}
-                                        onClose={handleClose}
+                                        onClose={
+                                            (event) => {
+                                                handleClose(event)
+                                            }
+                                        }
                                         anchorReference="anchorPosition"
                                         anchorPosition={
                                             (rightClick[inode.name]?.mouseY != null) && (rightClick[inode.name]?.mouseX != null)
@@ -158,9 +167,9 @@ const FileView = (props) => {
                                         <MenuItem disabled><Typography variant="overline">{inode.name}</Typography></MenuItem>
                                         {
                                             inode.type !== "file" &&
-                                            <MenuItem onClick={() => {
+                                            <MenuItem onClick={(event) => {
                                                 setCurrentDirectory(directoryObject[item])
-                                                handleClose()
+                                                handleClose(event)
                                             }}>
                                                 <ListItemIcon>
                                                     <LaunchIcon />
@@ -169,9 +178,9 @@ const FileView = (props) => {
                                             </MenuItem>
                                         }
                                         <MenuItem onClick={
-                                            () => {
+                                            (event) => {
                                                 handleDelete(currentDisk, directoryObject[item])
-                                                handleClose()
+                                                handleClose(event)
                                             }
                                         }>
                                             <ListItemIcon>

@@ -79,6 +79,9 @@ const DiskForm = (props) => {
             if(Object.keys(disks).includes(params.diskName)) {
                 newErrors.push("That disk name is already being used. Please choose another one.")
             }
+            if(params.totalBlocks > 10000) {
+                newErrors.push("Please initialize a smaller disk. Disks creating over 10,000 total blocks can lead to poor responsiveness.")
+            }
             if(newErrors.length) {
                 setErrors(newErrors)
                 setErrorSnackbarOpen(true)
@@ -90,6 +93,7 @@ const DiskForm = (props) => {
                         blockSize: params.blockSize,
                         dataBlocks: params.dataBlocks,
                         inodeSize: params.inodeSize,
+                        inodeBlocks: params.inodeBlocks,
                         inodes: params.inodes,
                         system: "VSFS",
                     },
@@ -120,6 +124,12 @@ const DiskForm = (props) => {
 
                 setCurrentDisk(newDisk.name)
                 setCurrentDirectory(0)
+                setParams(prevParams => {
+                    return {
+                        ...prevParams,
+                        diskName: "",
+                    }
+                })
                 return {
                     ...prevDisks,
                     [newDisk.name]: newDisk
@@ -168,7 +178,7 @@ const DiskForm = (props) => {
                     >
                         <code style={{color: "#FF6461", background: "black", padding: "3px"}}>
                             sda
-                        </code> or 
+                        </code> or&nbsp;
                         <code style={{color: "#FF6461", background: "black", padding: "3px"}}>
                             sdb
                         </code> are common UNIX examples.

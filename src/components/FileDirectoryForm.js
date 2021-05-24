@@ -53,7 +53,7 @@ const FileDirectoryForm = (props) => {
 
     return (
         <div className={classes.tabHeader}>
-            <Typography variant="h5">Add a File or Directory</Typography>
+            <Typography variant="h5">Add a New File or Directory</Typography>
             <hr style={{marginBottom: "20px"}} />
             <FormControl variant="outlined" fullWidth>
                 <InputLabel>Type</InputLabel>
@@ -96,9 +96,22 @@ const FileDirectoryForm = (props) => {
                     data.type === "File" ? 
                     () => {
                         createFile(data.name, "User", currentDisk, currentDirectory, "rwxd", data.fileSize)
+                        setData(prevData => {
+                            return {
+                                ...prevData,
+                                name: "",
+                                fileSize: "",
+                            }
+                        })
                     } : 
                     () => {
                         createDirectory(data.name, "User", currentDisk, currentDirectory, "rwxd")
+                        setData(prevData => {
+                            return {
+                                ...prevData,
+                                name: "",
+                            }
+                        })
                     }
                 }>
                     Create

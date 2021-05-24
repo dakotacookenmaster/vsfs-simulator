@@ -20,7 +20,7 @@ const useStyles = makeStyles(theme => {
             padding: "10px",
             textAlign: "left",
             overflow: "auto",
-            maxHeight: "400px",
+            maxHeight: "300px",
         },
     }
 })
@@ -48,9 +48,11 @@ const FileSubtreeChildren = (props) => {
             nodeId={directoryId} 
             key={directoryId} 
             label={inode.name}
+            onClick={() => {
+                setSelected(directory[inode.name])
+            }}
             onDoubleClick={(event) => {
                 event.stopPropagation()
-                setSelected(rootDirectory)
                 setCurrentDirectory(rootDirectory)
             }}
         >
