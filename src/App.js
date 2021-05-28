@@ -59,12 +59,48 @@ const App = () => {
   const errorConfirm = useConfirm()
   const classes = useStyles()
 
+  useEffect(() => {
+    console.log(disks)
+  })
+
   const getDirectoryObject = useCallback((diskName, lowLevelDirectoryName) => {
     return disks[diskName]?.dataBlocks[disks[diskName].inodes[lowLevelDirectoryName].blockPointers[0]]
   }, [disks])
   
-  const getInodeObject = (diskName, lowLevelDirectoryName) => {
-    return disks[diskName]?.inodes[lowLevelDirectoryName]
+  const getInodeObject = (diskName, lowLevelInodeName) => {
+    return disks[diskName]?.inodes[lowLevelInodeName]
+  }
+
+  const parsePathIntoLowLevelFileName = (diskName, path) => {
+    // Split the path into names, and remove any empty strings
+    const highLevelNames = path.split("/").filter(value => value !== "")
+    let directory = getDirectoryObject(diskName, 0)
+    for(let i = 0; i < highLevelNames.length; i++) {
+      let name = highLevelNames[i]
+      // Check if the name is actually in the current directory
+      if(directory[name]) {
+        const inode = getInodeObject(diskName, directory[name])
+        // Check if the value is a directory
+        if(inode.type === "directory") {
+          // Grab the directory
+          directory = getDirectoryObject(diskName, directory[name])
+          // Check if it is the last item and a file (as should be a file)
+        } else if((inode.type === "file") && (i === (highLevelNames.length - 1)) && (inode.dTime === null)) {
+          return directory[name]
+        } else {
+          // A file was detected and wasn't the last item, or the last item was a deleted file. This is an invalid path.
+          console.log("INVALID PATH - A FILE WAS DETECTED AS A NON-TERMINATING ITEM, OR THE FILE WAS DELETED")
+          return null
+        }
+      } else {
+        // That directory or file didn't exist. This is an invalid path.
+        console.log("INVALID PATH - DIRECTORY OR FILE DIDN'T EXIST")
+        return null
+      }
+    }
+    // The last item was a directory, not a file.
+    console.log("INVALID PATH - THE LAST ITEM WAS A DIRECTORY")
+    return null
   }
 
   const getLowLevelParentName = useCallback((diskName, lowLevelDirectoryName) => {
@@ -72,7 +108,6 @@ const App = () => {
     if(directory) {
       const lowLevelDirectoryName = directory["."]
       const lowLevelParentName = directory[".."]
-
       return (lowLevelDirectoryName !== lowLevelParentName ? lowLevelParentName : null)
     } else {
       return null
@@ -142,7 +177,7 @@ const App = () => {
           newErrors.push("That disk does not exist. Try adding a new disk or use an existing disk.")
       }
       if(Object.keys(disks[diskName].dataBlocks[lowLevelDirectoryName]).includes(name)) {
-          newErrors.push("A file or directory with that name already exists in the current directory. Try using a different name.")
+          newErrors.push("A file, directory, or hard link with that name already exists in the current directory. Try using a different name.")
       }
       if(freeDataBlocks < dataBlocksNeeded || freeInodes < 1) {
           newErrors.push("There aren't enough free blocks to store a file that large. Try reducing the file size or deleting another file.")
@@ -155,15 +190,14 @@ const App = () => {
         let newDataBlockPointers = freeDataBlockIndices.slice(0, dataBlocksNeeded)
         let newInodePointer = freeInodeIndices[0]
         let newFile = {
-            name: name,
-            path: `${disks[diskName].inodes[lowLevelDirectoryName].path}${name}`,
             type: "file",
             rwxd: permissions,
             size: sizeInBytes,
             blocks: newDataBlockPointers.length,
             cTime: new Date().getTime(),
             blockPointers: newDataBlockPointers,
-            isUnlinked: false,
+            dTime: null,
+            refCount: 0,
         }
         newDataBlockPointers.forEach(pointer => {
             prevDisks[diskName].dataBitmap[pointer] = false // Mark spaces as used in the data bitmap
@@ -193,7 +227,7 @@ const App = () => {
       }
 
       if(Object.keys(prevDisks[diskName].dataBlocks[lowLevelDirectoryName]).includes(name)) {
-        newErrors.push("A file or directory with that name already exists in the current directory. Try using a different name.")
+        newErrors.push("A file, directory, or hard link with that name already exists in the current directory. Try using a different name.")
       }
 
       if(newErrors.length) {
@@ -213,7 +247,7 @@ const App = () => {
           blocks: 1,
           cTime: new Date().getTime(),
           blockPointers: [newDataBlockPointer],
-          isUnlinked: false
+          dTime: null,
         }
         prevDisks[diskName].dataBitmap[newDataBlockPointer] = false                 // Mark spaces as used in the data bitmap
         prevDisks[diskName].inodeBitmap[newInodePointer] = false                    // Mark space as used in the inode bitmap
@@ -235,6 +269,34 @@ const App = () => {
     })  
   }
 
+  const createHardLink = (diskName, lowLevelDirectoryName, path, name) => {
+    setDisks(prevDisks => {
+      let newErrors = []
+      const lowLevelFileName = parsePathIntoLowLevelFileName(diskName, path)
+
+      if(lowLevelFileName === null) {
+        // Got an invalid low level file name
+        newErrors.push("An invalid path was provided.")
+        setErrors(newErrors)
+        setErrorSnackbarOpen(true)
+        return { ...prevDisks }
+      }
+      if(Object.keys(prevDisks[diskName].dataBlocks[lowLevelDirectoryName]).includes(name)) {
+        newErrors.push("A file, directory, or hard link with that name already exists in the current directory. Try using a different name.")
+        setErrors(newErrors)
+        setErrorSnackbarOpen(true)
+        return {...prevDisks}
+      }
+
+      prevDisks[diskName].inodes[lowLevelFileName].refCount++                     // Increase the connected inode's refCount
+
+      // Create an entry in the directory's table using the parent directory's data block pointer
+      prevDisks[diskName].dataBlocks[prevDisks[diskName].inodes[lowLevelDirectoryName].blockPointers[0]][name] = lowLevelFileName
+
+      return {...prevDisks }
+    })
+  }
+
   return (
     <main className={classes.main}>
       <Header />
@@ -245,6 +307,7 @@ const App = () => {
               disks,
               currentLowLevelDirectoryName,
               currentDisk,
+              currentPath,
             }}
             methods={{
               setDisks,
@@ -254,6 +317,7 @@ const App = () => {
               setCurrentLowLevelDirectory,
               createFile,
               createDirectory,
+              createHardLink,
             }}
           />
         </div>

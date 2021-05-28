@@ -116,29 +116,29 @@ const FileView = (props) => {
             }
         }>
             { 
-                Object.keys(directory).map(item => {
-                    if(item !== "." && item !== "..") {
-                        const inode = getInodeObject(currentDisk, directory[item])
+                Object.keys(directory).map(name => {
+                    if(name !== "." && name !== "..") {
+                        const inode = getInodeObject(currentDisk, directory[name])
                         return (
-                            <div key={`${currentLowLevelDirectoryName}-${item}`}>
+                            <div key={`${currentLowLevelDirectoryName}-${name}`}>
                                 <div 
                                     onContextMenu={(event) => {
-                                        setSelected(directory[item])
-                                        handleRightClick(event, inode.name)
+                                        setSelected(directory[name])
+                                        handleRightClick(event, name)
                                     }} style={{ cursor: 'context-menu' }}
                                     onClick={() => {
-                                        setSelected(directory[item])
+                                        setSelected(directory[name])
                                     }}
                                     onDoubleClick={() => {
                                         if(inode.type === "directory") {
-                                            setCurrentLowLevelDirectory(directory[item])
+                                            setCurrentLowLevelDirectory(directory[name])
                                         }
                                     }}
                                 >
                                     {
                                         <Paper 
                                             variant="outlined" 
-                                            className={selected === directory[item] ? 
+                                            className={selected === directory[name] ? 
                                                 clsx(classes.explorerItem, classes.explorerItemSelected) : 
                                                 classes.explorerItem}
                                         >
@@ -146,12 +146,12 @@ const FileView = (props) => {
                                                 <DescriptionIcon fontSize="large"/> :
                                                 <FolderIcon fontSize="large" />
                                             }
-                                            <Typography style={{whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis"}}>{inode.name}</Typography> 
+                                            <Typography style={{whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis"}}>{name}</Typography> 
                                         </Paper>
                                     }
                                     <Menu
                                         keepMounted
-                                        open={rightClick[inode.name]?.mouseY != null}
+                                        open={rightClick[name]?.mouseY != null}
                                         onClose={
                                             (event) => {
                                                 handleClose(event)
@@ -159,16 +159,16 @@ const FileView = (props) => {
                                         }
                                         anchorReference="anchorPosition"
                                         anchorPosition={
-                                            (rightClick[inode.name]?.mouseY != null) && (rightClick[inode.name]?.mouseX != null)
-                                            ? { top: rightClick[inode.name].mouseY, left: rightClick[inode.name].mouseX }
+                                            (rightClick[name]?.mouseY != null) && (rightClick[name]?.mouseX != null)
+                                            ? { top: rightClick[name].mouseY, left: rightClick[name].mouseX }
                                             : undefined
                                         }
                                     >
-                                        <MenuItem disabled><Typography variant="overline">{inode.name}</Typography></MenuItem>
+                                        <MenuItem disabled><Typography variant="overline">{name}</Typography></MenuItem>
                                         {
                                             inode.type !== "file" &&
                                             <MenuItem onClick={(event) => {
-                                                setCurrentLowLevelDirectory(directory[item])
+                                                setCurrentLowLevelDirectory(directory[name])
                                                 handleClose(event)
                                             }}>
                                                 <ListItemIcon>
@@ -179,7 +179,7 @@ const FileView = (props) => {
                                         }
                                         <MenuItem onClick={
                                             (event) => {
-                                                handleDelete(currentDisk, directory[item])
+                                                handleDelete(currentDisk, directory[name])
                                                 handleClose(event)
                                             }
                                         }>
