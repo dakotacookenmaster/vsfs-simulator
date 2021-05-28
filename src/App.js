@@ -240,7 +240,6 @@ const App = () => {
 
         let newDirectory = {
           name: name,
-          path: `${disks[diskName].inodes[lowLevelDirectoryName].path}${name}/`,
           type: "directory",
           rwxd: permissions,
           size: 2,
