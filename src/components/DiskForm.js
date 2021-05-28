@@ -223,6 +223,8 @@ const DiskForm = (props) => {
                         <FormControl variant="outlined" fullWidth style={{textAlign: "left"}}>
                             <InputLabel>Inode Size</InputLabel>
                             <Select variant="outlined" value={params.inodeSize} onChange={handleChange} name="inodeSize" className={"grow"} label="Inode Size">
+                                <MenuItem value={64}>64 B</MenuItem>
+                                <MenuItem value={128}>128 B</MenuItem>
                                 <MenuItem value={256}>256 B</MenuItem>
                                 <MenuItem value={512}>512 B</MenuItem>
                                 <MenuItem value={1024}>1024 B (1 KiB)</MenuItem>
@@ -233,7 +235,9 @@ const DiskForm = (props) => {
             }
             <Tooltip
                 title={
-                    <Typography color="inherit">When simple mode is on, the system chooses inode and block sizes.</Typography>
+                    <Typography color="inherit">
+                        When simple mode is on, the system chooses inode and block sizes.
+                    </Typography>
                 }
                 placement="right" 
                 arrow
@@ -253,7 +257,6 @@ const DiskForm = (props) => {
                     label="Simple Mode"
                 />
             </Tooltip>
-            
             <Button 
                 variant="contained" 
                 color="primary" 

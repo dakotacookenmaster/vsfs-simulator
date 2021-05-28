@@ -8,11 +8,11 @@ import {
   makeStyles,
 } from "@material-ui/core"
 import TabPanel from "./TabPanel"
-import DiskForm from "../components/DiskForm"
 import clsx from "clsx"
 import HardDriveIcon from "../images/hard-drive.svg"
 import FolderWithFilesIcon from "../images/folder-with-files.svg"
-import FileDirectoryForm from "./FileDirectoryForm"
+import DataTypeForm from "./DataTypeForm"
+import DiskForm from "./DiskForm"
 
 const useStyles = makeStyles(theme => {
   return {
@@ -36,6 +36,7 @@ const InputPane = (props) => {
       disks,
       currentLowLevelDirectoryName,
       currentDisk,
+      currentPath,
     } = props.data
     const { 
         setDisks,
@@ -45,6 +46,7 @@ const InputPane = (props) => {
         setCurrentLowLevelDirectory,
         createFile,
         createDirectory,
+        createHardLink,
     } = props.methods
     const [currentTab, setCurrentTab] = useState(0)
     const classes = useStyles()
@@ -76,10 +78,9 @@ const InputPane = (props) => {
                   }
                 </Tabs>
                 <TabPanel value={currentTab} index={0}>
-                  <DiskForm 
+                  <DiskForm
                     data={{
                         disks,
-                        currentDisk,
                     }}
                     methods={{
                         setDisks,
@@ -91,14 +92,16 @@ const InputPane = (props) => {
                   />
                 </TabPanel>
                 <TabPanel value={currentTab} index={1}>
-                  <FileDirectoryForm
+                  <DataTypeForm
                     data={{
                       currentDisk,
                       currentLowLevelDirectoryName,
+                      currentPath,
                     }}
                     methods={{
                       createFile,
                       createDirectory,
+                      createHardLink,
                     }}
                   />
                 </TabPanel>

@@ -12,7 +12,7 @@ import {
     Paper,
     FormControl,
     makeStyles,
-    Typography
+    Typography,
 } from "@material-ui/core"
 import FileSubtree from "../components/FileSubtree"
 import FileView from "../components/FileView"
@@ -137,7 +137,11 @@ const FileExplorer = (props) => {
                     }}>
                         <ArrowUpwardIcon />
                     </Button>
-                    <TextField variant="outlined" value={currentPath} disabled />
+                    <TextField 
+                        variant="outlined" 
+                        value={currentPath} 
+                        disabled
+                    />
                 </div>
                 <div style={{clear: "both"}}></div>
                 <div className={classes.explorerGroup}>
