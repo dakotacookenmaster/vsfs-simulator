@@ -34,7 +34,7 @@ const useStyles = makeStyles(theme => {
 const InputPane = (props) => {
     const { 
       disks,
-      currentDirectory,
+      currentLowLevelDirectoryName,
       currentDisk,
     } = props.data
     const { 
@@ -42,7 +42,7 @@ const InputPane = (props) => {
         setErrors,
         setErrorSnackbarOpen,
         setCurrentDisk,
-        setCurrentDirectory,
+        setCurrentLowLevelDirectory,
         createFile,
         createDirectory,
     } = props.methods
@@ -86,7 +86,7 @@ const InputPane = (props) => {
                         setErrors,
                         setErrorSnackbarOpen,
                         setCurrentDisk,
-                        setCurrentDirectory,
+                        setCurrentLowLevelDirectory,
                     }}
                   />
                 </TabPanel>
@@ -94,7 +94,7 @@ const InputPane = (props) => {
                   <FileDirectoryForm
                     data={{
                       currentDisk,
-                      currentDirectory,
+                      currentLowLevelDirectoryName,
                     }}
                     methods={{
                       createFile,

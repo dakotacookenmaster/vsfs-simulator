@@ -28,7 +28,7 @@ const FileDirectoryForm = (props) => {
     const classes = useStyles()
     const {
         currentDisk,
-        currentDirectory,
+        currentLowLevelDirectoryName,
     } = props.data
     const { 
         createFile,
@@ -95,7 +95,7 @@ const FileDirectoryForm = (props) => {
                 onClick={
                     data.type === "File" ? 
                     () => {
-                        createFile(data.name, "User", currentDisk, currentDirectory, "rwxd", data.fileSize)
+                        createFile(data.name, currentDisk, currentLowLevelDirectoryName, "rwxd", data.fileSize)
                         setData(prevData => {
                             return {
                                 ...prevData,
@@ -105,7 +105,7 @@ const FileDirectoryForm = (props) => {
                         })
                     } : 
                     () => {
-                        createDirectory(data.name, "User", currentDisk, currentDirectory, "rwxd")
+                        createDirectory(data.name, currentDisk, currentLowLevelDirectoryName, "rwxd")
                         setData(prevData => {
                             return {
                                 ...prevData,

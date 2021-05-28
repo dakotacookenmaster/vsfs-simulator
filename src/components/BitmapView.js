@@ -1,7 +1,8 @@
-import { makeStyles, Typography, Button } from "@material-ui/core"
+import React, { useState } from "react"
+import { makeStyles, Typography, Button, Tooltip } from "@material-ui/core"
 import { ArrowBack as ArrowBackIcon } from "@material-ui/icons"
+import { Pagination } from "@material-ui/lab"
 import clsx from "clsx"
-import React from "react"
 
 const useStyles = makeStyles(theme => {
     return {
@@ -9,17 +10,24 @@ const useStyles = makeStyles(theme => {
             maxHeight: "400px",
             overflowX: "auto",
         },
+        paginationCenter: {
+            paddingTop: "20px",
+            display: "flex",
+            justifyContent: "center",
+        },
         container: {
             display: "flex",
             flexWrap: "wrap",
+            width: "80%",
+            margin: "0 auto",
         },
         block: {
-            width: "50px",
-            height: "50px",
+            width: "20px",
+            height: "20px",
             border: "2px solid white",
-            marginRight: "5px",
-            marginBottom: "10px",
-            padding: "3px",
+            marginRight: "3px",
+            marginBottom: "3px",
+            padding: "1px",
             "&:last-of-type": {
                 marginRight: "0px",
             }
@@ -29,19 +37,27 @@ const useStyles = makeStyles(theme => {
         },
         used: {
             background: "red",
-        }
+        },
     }
 })
 
 const BitmapView = (props) => {
     const classes = useStyles()
-    const { title } = props
+    const { title, labelPrefix } = props
     const {
         bitmap
     } = props.data
     const {
         setView
     } = props.methods
+
+    const [page, setPage] = useState(1)
+    const pageSize = 100
+
+    const handlePageChange = (event, newPage) => {
+        setPage(newPage)
+    }
+
     return (
         <div className={classes.box}>
             <Typography variant="h5" style={{textAlign: "left"}}>{ title }</Typography>
@@ -53,15 +69,37 @@ const BitmapView = (props) => {
             </Button>
             <div style={{clear: "both"}}></div>
             <div className={classes.container} style={{marginTop: "20px"}}>
-            {
-                bitmap.map((value, index) => {
-                    return (
-                        <div key={`bitmap-${index}`} className={clsx(classes.block, (value ? classes.free : classes.used))}>
-                            { index }
-                        </div>
-                    )
-                })
-            }
+                {
+                    bitmap.slice((page - 1) * pageSize, page * pageSize).map((value, index) => {
+                        return (
+                            <Tooltip
+                                key={`bitmap-${(page - 1) * pageSize + index}`}
+                                title={
+                                    <Typography 
+                                        className={classes.toolTip} 
+                                        color="inherit"
+                                    >
+                                        { `${labelPrefix} ${(page - 1) * pageSize + index}` }
+                                    </Typography>
+                                }
+                                placement="top" 
+                                arrow
+                            >
+                                <div className={clsx(classes.block, (value ? classes.free : classes.used))}></div>
+                            </Tooltip>
+                        )
+                    })
+                }
+            </div>
+            <div className={classes.paginationCenter}>
+                <Pagination 
+                    count={Math.ceil(bitmap.length / pageSize)} 
+                    variant="outlined" 
+                    shape="rounded" 
+                    page={page} 
+                    onChange={handlePageChange}
+                    className={classes.pagination}
+                /> 
             </div>
         </div>
     )

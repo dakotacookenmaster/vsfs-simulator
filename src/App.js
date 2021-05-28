@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react"
+import React, { useState, useEffect, useCallback } from "react"
 import './App.css'
 import { makeStyles } from "@material-ui/core/styles"
 import { useConfirm } from "material-ui-confirm"
@@ -50,7 +50,7 @@ const useStyles = makeStyles(theme => {
 })
 
 const App = () => {
-  const [currentDirectory, setCurrentDirectory] = useState(0)
+  const [currentLowLevelDirectoryName, setCurrentLowLevelDirectory] = useState(0)
   const [disks, setDisks] = useState({})
   const [currentDisk, setCurrentDisk] = useState(null)
   const [currentPath, setCurrentPath] = useState("/")
@@ -59,17 +59,44 @@ const App = () => {
   const errorConfirm = useConfirm()
   const classes = useStyles()
 
-  useEffect(() => {
-    setCurrentPath(disks[currentDisk]?.inodes[currentDirectory].path || "/")
-  }, [disks, currentDirectory, currentDisk])
-
-  const getDirectoryObject = (diskName, directory) => {
-    return disks[diskName].dataBlocks[disks[diskName].inodes[directory].blockPointers[0]]
-  }
+  const getDirectoryObject = useCallback((diskName, lowLevelDirectoryName) => {
+    return disks[diskName]?.dataBlocks[disks[diskName].inodes[lowLevelDirectoryName].blockPointers[0]]
+  }, [disks])
   
-  const getInodeObject = (diskName, id) => {
-    return disks[diskName].inodes[id]
+  const getInodeObject = (diskName, lowLevelDirectoryName) => {
+    return disks[diskName]?.inodes[lowLevelDirectoryName]
   }
+
+  const getLowLevelParentName = useCallback((diskName, lowLevelDirectoryName) => {
+    const directory = getDirectoryObject(diskName, lowLevelDirectoryName)
+    if(directory) {
+      const lowLevelDirectoryName = directory["."]
+      const lowLevelParentName = directory[".."]
+
+      return (lowLevelDirectoryName !== lowLevelParentName ? lowLevelParentName : null)
+    } else {
+      return null
+    }
+  }, [getDirectoryObject])
+
+  useEffect(() => {
+    if(currentDisk) {
+      let pathNumbers = [currentLowLevelDirectoryName]
+      let path = "/"
+      let lowLevelParentName = getLowLevelParentName(currentDisk, currentLowLevelDirectoryName)
+      while(lowLevelParentName !== null) {
+        pathNumbers.unshift(lowLevelParentName)
+        lowLevelParentName = getLowLevelParentName(currentDisk, lowLevelParentName)
+      }
+
+      for(let i = 0; i < pathNumbers.length - 1; i++) {
+        const directory = getDirectoryObject(currentDisk, pathNumbers[i])
+        path += `${Object.keys(directory).filter(key => key !== ".." && key !== ".").find(key => directory[key] === pathNumbers[i + 1])}/`
+      }
+
+      setCurrentPath(path)
+    }
+  }, [currentLowLevelDirectoryName, currentDisk, getDirectoryObject, getLowLevelParentName])
 
   const handleError = (title, description) => {
     errorConfirm({
@@ -104,7 +131,7 @@ const App = () => {
     return [freeBlocks, freeBlockIndices]
 }
 
-  const createFile = (name, uid, diskName, parentId, permissions, sizeInBytes) => {
+  const createFile = (name, diskName, lowLevelDirectoryName, permissions, sizeInBytes) => {
     setDisks(prevDisks => {
       let newErrors = []
       const dataBlocksNeeded = Math.ceil((sizeInBytes / 1024) / disks[diskName].superblock.blockSize)
@@ -114,7 +141,7 @@ const App = () => {
       if(!disks[diskName]) {
           newErrors.push("That disk does not exist. Try adding a new disk or use an existing disk.")
       }
-      if(Object.keys(disks[diskName].dataBlocks[parentId]).includes(name)) {
+      if(Object.keys(disks[diskName].dataBlocks[lowLevelDirectoryName]).includes(name)) {
           newErrors.push("A file or directory with that name already exists in the current directory. Try using a different name.")
       }
       if(freeDataBlocks < dataBlocksNeeded || freeInodes < 1) {
@@ -129,9 +156,8 @@ const App = () => {
         let newInodePointer = freeInodeIndices[0]
         let newFile = {
             name: name,
-            path: `${disks[diskName].inodes[parentId].path}${name}`,
+            path: `${disks[diskName].inodes[lowLevelDirectoryName].path}${name}`,
             type: "file",
-            uid: uid,
             rwxd: permissions,
             size: sizeInBytes,
             blocks: newDataBlockPointers.length,
@@ -143,10 +169,10 @@ const App = () => {
             prevDisks[diskName].dataBitmap[pointer] = false // Mark spaces as used in the data bitmap
         })
         // Update the size in the parent's inode
-        prevDisks[diskName].inodes[parentId].size++
+        prevDisks[diskName].inodes[lowLevelDirectoryName].size++
 
         prevDisks[diskName].inodeBitmap[newInodePointer] = false // Mark space as used in the inode bitmap
-        prevDisks[diskName].dataBlocks[parentId][name] = newInodePointer // Create an entry in the directory's table
+        prevDisks[diskName].dataBlocks[lowLevelDirectoryName][name] = newInodePointer // Create an entry in the directory's table
         prevDisks[diskName].inodes[newInodePointer] = newFile
         newDataBlockPointers.forEach(pointer => {
             prevDisks[diskName].dataBlocks[pointer] = name
@@ -156,7 +182,7 @@ const App = () => {
     })
   }
 
-  const createDirectory = (name, uid, diskName, parentId, permissions) => {
+  const createDirectory = (name, diskName, lowLevelDirectoryName, permissions) => {
     setDisks(prevDisks => {
       let newErrors = []
       const [freeDataBlocks, freeDataBlockIndices] = getFreeBlocks(diskName, "dataBitmap")
@@ -166,7 +192,7 @@ const App = () => {
         newErrors.push("There aren't enough free blocks to create a new directory. Try deleting another file to free up space.")
       }
 
-      if(Object.keys(prevDisks[diskName].dataBlocks[parentId]).includes(name)) {
+      if(Object.keys(prevDisks[diskName].dataBlocks[lowLevelDirectoryName]).includes(name)) {
         newErrors.push("A file or directory with that name already exists in the current directory. Try using a different name.")
       }
 
@@ -180,9 +206,8 @@ const App = () => {
 
         let newDirectory = {
           name: name,
-          path: `${disks[diskName].inodes[parentId].path}${name}/`,
+          path: `${disks[diskName].inodes[lowLevelDirectoryName].path}${name}/`,
           type: "directory",
-          uid: uid,
           rwxd: permissions,
           size: 2,
           blocks: 1,
@@ -194,15 +219,15 @@ const App = () => {
         prevDisks[diskName].inodeBitmap[newInodePointer] = false                    // Mark space as used in the inode bitmap
 
         // Create an entry in the directory's table using the parent directory's data block pointer
-        prevDisks[diskName].dataBlocks[prevDisks[diskName].inodes[parentId].blockPointers[0]][name] = newInodePointer
+        prevDisks[diskName].dataBlocks[prevDisks[diskName].inodes[lowLevelDirectoryName].blockPointers[0]][name] = newInodePointer
         
         // Update the size in the parent's inode
-        prevDisks[diskName].inodes[parentId].size++
+        prevDisks[diskName].inodes[lowLevelDirectoryName].size++
         
         prevDisks[diskName].inodes[newInodePointer] = newDirectory                  // Create a new inode for this directory
         prevDisks[diskName].dataBlocks[newDataBlockPointer] = {                     // Add this directory to the data region
             ".": newInodePointer,
-            "..": parentId,
+            "..": lowLevelDirectoryName,
         }
 
         return {...prevDisks}                                                       // Use the spread operator to create a "new" object to re-render
@@ -218,7 +243,7 @@ const App = () => {
           <InputPane
             data={{
               disks,
-              currentDirectory,
+              currentLowLevelDirectoryName,
               currentDisk,
             }}
             methods={{
@@ -226,7 +251,7 @@ const App = () => {
               setErrors,
               setErrorSnackbarOpen,
               setCurrentDisk,
-              setCurrentDirectory,
+              setCurrentLowLevelDirectory,
               createFile,
               createDirectory,
             }}
@@ -237,13 +262,13 @@ const App = () => {
             data={{
               disks,
               currentDisk,
-              currentDirectory,
+              currentLowLevelDirectoryName,
               currentPath,
             }}
             methods={{
               getInodeObject,
               getDirectoryObject,
-              setCurrentDirectory,
+              setCurrentLowLevelDirectory,
               handleError,
               setCurrentDisk,
             }}

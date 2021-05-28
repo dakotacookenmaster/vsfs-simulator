@@ -29,60 +29,61 @@ const FileSubtreeChildren = (props) => {
     const {
         diskName,
         disks,
+        name,
         rootDirectory,
     } = props.data
 
     const {
         setSelected,
-        setCurrentDirectory,
+        setCurrentLowLevelDirectory,
         getDirectoryObject,
         getInodeObject,
     } = props.methods
 
     const directory = getDirectoryObject(diskName, rootDirectory)
-    const inode = getInodeObject(diskName, rootDirectory)
-    const directoryId = `${diskName}-directory-${inode.name}-${rootDirectory}`
+    const directoryId = `${diskName}-directory-${name}-${rootDirectory}`
 
     return (
         <TreeItem
             nodeId={directoryId} 
             key={directoryId} 
-            label={inode.name}
+            label={name}
             onClick={() => {
-                setSelected(directory[inode.name])
+                setSelected(name === "/" ? 0 : directory[name])
             }}
             onDoubleClick={(event) => {
                 event.stopPropagation()
-                setCurrentDirectory(rootDirectory)
+                setCurrentLowLevelDirectory(rootDirectory)
             }}
         >
             {
-                Object.keys(directory).map(item => {
-                    if(item !== "." && item !== "..") {
-                        const inode = getInodeObject(diskName, directory[item])
+                Object.keys(directory).map(name => {
+                    if(name !== "." && name !== "..") {
+                        const inode = getInodeObject(diskName, directory[name])
                         if(inode.type === "file") {
-                            const fileId = `${diskName}-file-${item}-${directory[item]}`
+                            const fileId = `${diskName}-file-${name}-${directory[name]}`
                             return (
                                 <TreeItem 
                                     nodeId={fileId} 
                                     key={fileId} 
-                                    label={inode.name}
+                                    label={name}
                                     onClick={() => {
-                                        setSelected(directory[item])
+                                        setSelected(directory[name])
                                     }}
                                 />
                             )
                         } else {
                             return <FileSubtreeChildren
-                                key={`subtree-${inode.name}-${directory[item]}`}
+                                key={`subtree-${name}-${directory[name]}`}
                                 data={{
                                     disks,
                                     diskName,
-                                    rootDirectory: directory[item],
+                                    name,
+                                    rootDirectory: directory[name],
                                 }} 
                                 methods={{
                                     setSelected,
-                                    setCurrentDirectory,
+                                    setCurrentLowLevelDirectory,
                                     getDirectoryObject,
                                     getInodeObject,
                                 }}
@@ -106,7 +107,7 @@ const FileSubtree = (props) => {
 
     const { 
         setSelected,
-        setCurrentDirectory,
+        setCurrentLowLevelDirectory,
         getDirectoryObject,
         getInodeObject,
     } = props.methods 
@@ -151,11 +152,12 @@ const FileSubtree = (props) => {
                     data={{
                         diskName: currentDisk,
                         rootDirectory: 0,
+                        name: "/",
                         disks,
                     }}
                     methods={{
                         setSelected,
-                        setCurrentDirectory,
+                        setCurrentLowLevelDirectory,
                         getDirectoryObject,
                         getInodeObject,
                     }}

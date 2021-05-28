@@ -37,14 +37,14 @@ const DataPane = (props) => {
     const { 
         disks,
         currentDisk,
-        currentDirectory,
+        currentLowLevelDirectoryName,
         currentPath,
     } = props.data
 
     const {
         getInodeObject,
         getDirectoryObject,
-        setCurrentDirectory,
+        setCurrentLowLevelDirectory,
         handleError,
         setCurrentDisk,
     } = props.methods
@@ -87,13 +87,13 @@ const DataPane = (props) => {
                         data={{
                             disks,
                             currentDisk,
-                            currentDirectory,
+                            currentLowLevelDirectoryName,
                             currentPath,
                         }}
                         methods={{
                             getInodeObject,
                             getDirectoryObject,
-                            setCurrentDirectory,
+                            setCurrentLowLevelDirectory,
                             handleError,
                             setCurrentDisk,
                         }}

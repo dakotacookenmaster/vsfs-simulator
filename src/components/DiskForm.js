@@ -4,10 +4,13 @@ import {
     Typography,
     Tooltip,
     Button,
-    InputAdornment,
     Switch,
     TextField,
     FormControlLabel,
+    FormControl,
+    InputLabel,
+    Select,
+    MenuItem,
 } from "@material-ui/core"
 import {
     Add as AddIcon
@@ -36,7 +39,7 @@ const DiskForm = (props) => {
         setErrors,
         setErrorSnackbarOpen,
         setCurrentDisk,
-        setCurrentDirectory,
+        setCurrentLowLevelDirectory,
     } = props.methods
     const classes = useStyles()
     const [params, setParams] = useState({
@@ -106,10 +109,7 @@ const DiskForm = (props) => {
                 newDisk.inodeBitmap[0] = false  // Allocate an inode for the root directory
                 newDisk.dataBitmap[0] = false   // Allocate a data block for the root directory
                 newDisk.inodes[0] = {           // Initialize an inode for the root directory
-                    name: "/",
-                    path: "/",
                     type: "directory",
-                    uid: "Sys",
                     rwxd: "rwx-",
                     size: 2,
                     blocks: 1,
@@ -123,7 +123,7 @@ const DiskForm = (props) => {
                 }
 
                 setCurrentDisk(newDisk.name)
-                setCurrentDirectory(0)
+                setCurrentLowLevelDirectory(0)
                 setParams(prevParams => {
                     return {
                         ...prevParams,
@@ -197,45 +197,37 @@ const DiskForm = (props) => {
                     className={"grow"}
                 />
             </Tooltip>
-            <TextField 
-                variant="outlined"
-                label="Disk Size"
-                name="diskSize"
-                value={params.diskSize}
-                onChange={handleChange}
-                fullWidth 
-                InputProps={{
-                    endAdornment: <InputAdornment position="end">KiB</InputAdornment>
-                }}
-                className={"grow"}
-            />
+            <FormControl variant="outlined" fullWidth style={{textAlign: "left"}}>
+                <InputLabel>Disk Size</InputLabel>
+                <Select variant="outlined" value={params.diskSize} onChange={handleChange} name="diskSize" className={"grow"} label="Disk Size">
+                    <MenuItem value={256}>256 KiB</MenuItem>
+                    <MenuItem value={512}>512 KiB</MenuItem>
+                    <MenuItem value={1024}>1024 KiB (1 MiB)</MenuItem>
+                    <MenuItem value={2048}>2048 KiB (2 MiB)</MenuItem>
+                    <MenuItem value={4096}>4096 KiB (4 MiB)</MenuItem>
+                    <MenuItem value={8192}>8192 KiB (8 MiB)</MenuItem>
+                </Select>
+            </FormControl>
             { !params.simpleMode && 
                 (
                     <>
-                        <TextField 
-                            variant="outlined" 
-                            label="Block Size"
-                            name="blockSize"
-                            onChange={handleChange}
-                            fullWidth
-                            InputProps={{
-                                endAdornment: <InputAdornment position="end">KiB</InputAdornment>
-                            }}
-                            value={params.blockSize}
-                            className={"grow"}
-                        />
-                        <TextField 
-                            variant="outlined"
-                            label="Inode Size"
-                            name="inodeSize"
-                            onChange={handleChange}
-                            fullWidth
-                            InputProps={{
-                                endAdornment: <InputAdornment position="end">B</InputAdornment>
-                            }}
-                            value={params.inodeSize}
-                            className={"grow"}
-                        />
+                        <FormControl variant="outlined" fullWidth style={{textAlign: "left"}}>
+                            <InputLabel>Block Size</InputLabel>
+                            <Select variant="outlined" value={params.blockSize} onChange={handleChange} name="blockSize" className={"grow"} label="Block Size">
+                                <MenuItem value={1}>1 KiB</MenuItem>
+                                <MenuItem value={2}>2 KiB</MenuItem>
+                                <MenuItem value={4}>4 KiB</MenuItem>
+                                <MenuItem value={8}>8 KiB</MenuItem>
+                            </Select>
+                        </FormControl>
+                        <FormControl variant="outlined" fullWidth style={{textAlign: "left"}}>
+                            <InputLabel>Inode Size</InputLabel>
+                            <Select variant="outlined" value={params.inodeSize} onChange={handleChange} name="inodeSize" className={"grow"} label="Inode Size">
+                                <MenuItem value={256}>256 B</MenuItem>
+                                <MenuItem value={512}>512 B</MenuItem>
+                                <MenuItem value={1024}>1024 B (1 KiB)</MenuItem>
+                            </Select>
+                        </FormControl>
                     </>
                 )
             }
