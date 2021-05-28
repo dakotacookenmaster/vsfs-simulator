@@ -54,7 +54,7 @@ const BlockView = (props) => {
 
     return (
         <>
-            <Typography variant="h5" style={{textAlign: "left"}}>Inode Table</Typography>
+            <Typography variant="h5" style={{textAlign: "left"}}>Disk Metadata</Typography>
             <hr style={{marginBottom: "20px"}} />
             <div className={classes.blockView}>
                 <div className={classes.container}>

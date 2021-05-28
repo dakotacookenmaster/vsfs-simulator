@@ -58,13 +58,13 @@ const FileExplorer = (props) => {
     const { 
         disks,
         currentDisk,
-        currentDirectory,
+        currentLowLevelDirectoryName,
         currentPath,
     } = props.data
     const {
         getInodeObject,
         getDirectoryObject,
-        setCurrentDirectory,
+        setCurrentLowLevelDirectory,
         handleError,
         setCurrentDisk,
     } = props.methods
@@ -73,16 +73,16 @@ const FileExplorer = (props) => {
 
     const handleSelectChange = (event) => {
         const { value } = event.target
-        setCurrentDirectory(0)
+        setCurrentLowLevelDirectory(0)
         setCurrentDisk(value)
     }
 
-    const unlink = (diskName, directory) => {
+    const unlink = (diskName, lowLevelDirectoryName) => {
         alert("UNLINKED")
-        const inode = getInodeObject(diskName, directory)
-        const directoryObject = getDirectoryObject(diskName, directory)
+        const inode = getInodeObject(diskName, lowLevelDirectoryName)
+        const directory = getDirectoryObject(diskName, lowLevelDirectoryName)
         if(inode.type === "directory") {
-            if(Object.keys(directoryObject).length > 2) {
+            if(Object.keys(directory).length > 2) {
                 const title = "Unable to Unlink"
                 const description = "You cannot unlink a folder that has any files or folders inside of it. Try removing those first."
                 handleError(title, description)
@@ -125,13 +125,13 @@ const FileExplorer = (props) => {
                         </Select>
                     </FormControl>
                     <Button variant="outlined" onClick={() => {
-                        setCurrentDirectory(0)
+                        setCurrentLowLevelDirectory(0)
                     }}>
                         <HomeIcon />
                     </Button>
                     <Button variant="outlined" onClick={() => {
-                        setCurrentDirectory(prevCurrentDirectory => {
-                            const currentDirectoryObject = getDirectoryObject(currentDisk, currentDirectory)
+                        setCurrentLowLevelDirectory(prevCurrentDirectory => {
+                            const currentDirectoryObject = getDirectoryObject(currentDisk, currentLowLevelDirectoryName)
                             return currentDirectoryObject[".."]
                         })
                     }}>
@@ -151,20 +151,20 @@ const FileExplorer = (props) => {
                             getDirectoryObject,
                             getInodeObject,
                             setSelected,
-                            setCurrentDirectory,
+                            setCurrentLowLevelDirectory,
                         }}
                     />
                     <FileView
                         data={{
                             selected,
                             currentDisk,
-                            currentDirectory,
+                            currentLowLevelDirectoryName,
                         }}
                         methods={{
                             setSelected,
                             getDirectoryObject,
                             getInodeObject,
-                            setCurrentDirectory,
+                            setCurrentLowLevelDirectory,
                             unlink,
                         }}
                     />

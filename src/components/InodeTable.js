@@ -26,6 +26,7 @@ const InodeTable = (props) => {
         return (
             <BitmapView
                 title="Inode Bitmap"
+                labelPrefix="Inode"
                 data={{
                     bitmap: disk.inodeBitmap
                 }}
@@ -38,6 +39,7 @@ const InodeTable = (props) => {
         return (
             <BitmapView
                 title="Data Bitmap"
+                labelPrefix="Data Block"
                 data={{
                     bitmap: disk.dataBitmap
                 }}
