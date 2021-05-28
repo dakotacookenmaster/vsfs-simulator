@@ -206,6 +206,8 @@ const DiskForm = (props) => {
                     <MenuItem value={2048}>2048 KiB (2 MiB)</MenuItem>
                     <MenuItem value={4096}>4096 KiB (4 MiB)</MenuItem>
                     <MenuItem value={8192}>8192 KiB (8 MiB)</MenuItem>
+                    <MenuItem value={16384}>16384 KiB (16 MiB)</MenuItem>
+                    <MenuItem value={32768}>32768 KiB (32 MiB)</MenuItem>
                 </Select>
             </FormControl>
             { !params.simpleMode && 
