@@ -123,11 +123,11 @@ const FileView = (props) => {
                             <div key={`${currentLowLevelDirectoryName}-${name}`}>
                                 <div 
                                     onContextMenu={(event) => {
-                                        setSelected(directory[name])
+                                        setSelected(name)
                                         handleRightClick(event, name)
                                     }} style={{ cursor: 'context-menu' }}
                                     onClick={() => {
-                                        setSelected(directory[name])
+                                        setSelected(name)
                                     }}
                                     onDoubleClick={() => {
                                         if(inode.type === "directory") {
@@ -138,7 +138,7 @@ const FileView = (props) => {
                                     {
                                         <Paper 
                                             variant="outlined" 
-                                            className={selected === directory[name] ? 
+                                            className={selected === name ? 
                                                 clsx(classes.explorerItem, classes.explorerItemSelected) : 
                                                 classes.explorerItem}
                                         >

@@ -49,7 +49,7 @@ const FileSubtreeChildren = (props) => {
             key={directoryId} 
             label={name}
             onClick={() => {
-                setSelected(name === "/" ? 0 : directory[name])
+                setSelected(name === "/" ? 0 : name)
             }}
             onDoubleClick={(event) => {
                 event.stopPropagation()
@@ -68,7 +68,7 @@ const FileSubtreeChildren = (props) => {
                                     key={fileId} 
                                     label={name}
                                     onClick={() => {
-                                        setSelected(directory[name])
+                                        setSelected(name)
                                     }}
                                 />
                             )

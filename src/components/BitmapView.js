@@ -98,7 +98,6 @@ const BitmapView = (props) => {
                     shape="rounded" 
                     page={page} 
                     onChange={handlePageChange}
-                    className={classes.pagination}
                 /> 
             </div>
         </div>

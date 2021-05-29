@@ -77,14 +77,14 @@ const DiskForm = (props) => {
                 newErrors.push("You must give the new disk a name.")
             }
             if(isNaN(params.dataBlocks) || params.dataBlocks <= 0 || isNaN(params.inodeBlocks) || params.inodeBlocks <= 0 || isNaN(params.inodes) || params.inodes < 2) {
-                newErrors.push("There are too few blocks to build the file system. Consider increasing the disk size, decreasing the block size, or decreasing the inode size.")
+                newErrors.push("There are too few blocks to build the file system. Consider increasing the disk size, increasing the block size, or decreasing the inode size.")
             }
             if(Object.keys(disks).includes(params.diskName)) {
                 newErrors.push("That disk name is already being used. Please choose another one.")
             }
-            if(params.totalBlocks > 10000) {
-                newErrors.push("Please initialize a smaller disk. Disks creating over 10,000 total blocks can lead to poor responsiveness.")
-            }
+            // if(params.totalBlocks > 15000) {
+            //     newErrors.push("Please initialize a smaller disk. Disks creating over 15,000 total blocks can lead to poor responsiveness.")
+            // }
             if(newErrors.length) {
                 setErrors(newErrors)
                 setErrorSnackbarOpen(true)
@@ -207,7 +207,6 @@ const DiskForm = (props) => {
                     <MenuItem value={4096}>4096 KiB (4 MiB)</MenuItem>
                     <MenuItem value={8192}>8192 KiB (8 MiB)</MenuItem>
                     <MenuItem value={16384}>16384 KiB (16 MiB)</MenuItem>
-                    <MenuItem value={32768}>32768 KiB (32 MiB)</MenuItem>
                 </Select>
             </FormControl>
             { !params.simpleMode && 
@@ -225,7 +224,6 @@ const DiskForm = (props) => {
                         <FormControl variant="outlined" fullWidth style={{textAlign: "left"}}>
                             <InputLabel>Inode Size</InputLabel>
                             <Select variant="outlined" value={params.inodeSize} onChange={handleChange} name="inodeSize" className={"grow"} label="Inode Size">
-                                <MenuItem value={64}>64 B</MenuItem>
                                 <MenuItem value={128}>128 B</MenuItem>
                                 <MenuItem value={256}>256 B</MenuItem>
                                 <MenuItem value={512}>512 B</MenuItem>
